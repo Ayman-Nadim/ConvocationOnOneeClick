@@ -148,7 +148,10 @@
 }
 
 .convocation-sheet {
-  font-family: "Amiri", "Cairo", serif;
+  direction: rtl;
+  font-family: "Traditional Arabic", "Arabic Transparent", "Simplified Arabic", "Noto Naskh Arabic", serif;
+  font-weight: normal;
+  font-style: normal;
   background: white;
   color: #111;
   width: 210mm;
@@ -156,10 +159,10 @@
   padding: 18mm 16mm;
   box-sizing: border-box;
   line-height: 1.9;
+  font-size: 22px;
   page-break-after: always;
   break-after: page;
 }
-
 .hl {
   background-color: #fef08a;
   padding: 0 4px;

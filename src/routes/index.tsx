@@ -1,3 +1,7 @@
+<link
+  href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
