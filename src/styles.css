@@ -156,7 +156,7 @@
   color: #111;
   width: 210mm;
   min-height: 297mm;
-  padding: 18mm 16mm;
+  padding: 14mm 20mm 10mm;
   box-sizing: border-box;
   line-height: 1.5;
   font-size: 15px;
@@ -181,9 +181,20 @@
   .convocation-sheet {
     box-shadow: none !important;
     margin: 0 !important;
+    /* Don't force full-page height in print: a sheet even 1px taller than
+       297mm spills onto a second page. page-break-after handles pagination. */
+    min-height: auto !important;
+  }
+  .convocation-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
   }
   .hl {
     background-color: transparent !important;
     padding: 0 !important;
+  }
+  /* Templates highlight placeholders with inline background styles — strip those in print too */
+  .convocation-sheet [style*="background"] {
+    background: transparent !important;
   }
 }
