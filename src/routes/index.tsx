@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { extractDocument, type ExtractedData } from "@/lib/extract.functions";
+import { generatePdf } from "@/lib/pdf.functions";
 import { ConvocationSheet } from "@/components/ConvocationSheet";
 import { TemplateManager } from "@/components/TemplateManager";
 import { useTemplates, renderTemplate, type ConvocationTemplate } from "@/lib/templates";
@@ -170,8 +171,10 @@ function Index() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectedAvocats, setSelectedAvocats] = useState<Set<string>>(new Set());
   const [mission, setMission] = useState<string[]>(DEFAULT_MISSION);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const extract = useServerFn(extractDocument);
+  const renderPdf = useServerFn(generatePdf);
 
   const { templates, create, update, remove } = useTemplates();
   const [templateId, setTemplateId] = useState<string>("");
@@ -286,17 +289,51 @@ function Index() {
 
   const downloadPdf = async () => {
     if (!sheetRef.current) return;
-    const html2pdf = (await import("html2pdf.js")).default;
-    await html2pdf()
-      .set({
-        margin: 0,
-        filename: `convocation-${data?.numero_dossier || "document"}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-      })
-      .from(sheetRef.current)
-      .save();
+    setPdfLoading(true);
+    try {
+      const cssText = Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join("\n");
+          } catch {
+            return sheet.href ? `@import url("${sheet.href}");` : "";
+          }
+        })
+        .join("\n");
+
+      const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap"
+    />
+    <style>${cssText}</style>
+  </head>
+  <body>${sheetRef.current.outerHTML}</body>
+</html>`;
+
+      const base64 = await renderPdf({ data: { html } });
+      const byteChars = atob(base64);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `convocation-${data?.numero_dossier || "document"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la génération du PDF");
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const selectedParties = parties.filter((p) => selected.has(p.id));
@@ -695,8 +732,13 @@ function Index() {
               <Button onClick={() => window.print()} variant="secondary">
                 <Printer className="w-4 h-4 mr-2" /> Imprimer ({totalSheets})
               </Button>
-              <Button onClick={downloadPdf}>
-                <Download className="w-4 h-4 mr-2" /> Télécharger PDF
+              <Button onClick={downloadPdf} disabled={pdfLoading}>
+                {pdfLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Télécharger PDF
               </Button>
             </div>
 
