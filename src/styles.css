@@ -177,6 +177,7 @@
     position: absolute;
     left: 0; top: 0;
     width: 100%;
+    overflow: visible !important;
   }
   .convocation-sheet {
     box-shadow: none !important;

@@ -742,7 +742,7 @@ function Index() {
               </Button>
             </div>
 
-            <div ref={sheetRef} className="print-area overflow-x-auto pb-8 space-y-8">
+            <div ref={sheetRef} className="print-area pb-8 space-y-8">
               {selectedParties.map((p, i) => {
                 const vars = {
                   nom_destinataire: p.nom_complet,
